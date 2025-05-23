@@ -173,7 +173,9 @@ export function UpgradesPanel() {
                     userData.rateUpgradeLevel,
                     "WBUX/hr",
                   ),
-                )}
+                ).map((card, idx) => (
+                  <div key={MINING_RATE_UPGRADES[idx].level}>{card}</div>
+                ))}
               </div>
             </TabsContent>
 
@@ -189,7 +191,9 @@ export function UpgradesPanel() {
                     userData.boostUpgradeLevel,
                     "",
                   ),
-                )}
+                ).map((card, idx) => (
+                  <div key={MINING_BOOST_UPGRADES[idx].level}>{card}</div>
+                ))}
               </div>
             </TabsContent>
 
@@ -205,7 +209,9 @@ export function UpgradesPanel() {
                     userData.timeUpgradeLevel,
                     "min",
                   ),
-                )}
+                ).map((card, idx) => (
+                  <div key={MINING_TIME_UPGRADES[idx].level}>{card}</div>
+                ))}
               </div>
             </TabsContent>
           </Tabs>

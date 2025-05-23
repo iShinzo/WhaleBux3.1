@@ -17,19 +17,35 @@ import { DailyLogin } from "@/components/daily-login"
 import { ReferralSystem } from "@/components/referral-system"
 import { ReferralMarket } from "@/components/referral-market"
 import { Leaderboard } from "@/components/leaderboard"
+import AuthPage from "./auth/page"
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const { userData } = useUserData()
 
   useEffect(() => {
-    // Simulate loading time
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
-
-    return () => clearTimeout(timer)
+    const loggedIn = sessionStorage.getItem("wbux_logged_in") === "true"
+    setIsLoggedIn(loggedIn)
   }, [])
+
+  // Listen for login event from AuthPage via sessionStorage
+  useEffect(() => {
+    const handleStorage = () => {
+      const loggedIn = sessionStorage.getItem("wbux_logged_in") === "true"
+      if (loggedIn) {
+        setIsLoggedIn(true)
+        setIsLoading(true)
+        setTimeout(() => setIsLoading(false), 3000)
+      }
+    }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
+
+  if (!isLoggedIn) {
+    return <AuthPage />
+  }
 
   if (isLoading) {
     return <LoadingScreen />

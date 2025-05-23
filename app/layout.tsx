@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "WhaleBux Mining App",
   description: "Mine WhaleBux coins and earn WBUX tokens",
-    generator: 'v0.dev'
+    generator: 'WhaleBux'
 }
 
 export default function RootLayout({
