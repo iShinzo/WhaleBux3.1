@@ -22,6 +22,10 @@ export function MiningDashboard() {
   const currentLevel = userData.level
   const potentialEarnings = Math.floor(calculatePotentialEarnings())
 
+  // Defensive: fallback for coins and experience to avoid undefined errors
+  const safeCoins = typeof userData.coins === 'number' ? userData.coins : 0;
+  const safeExperience = typeof (userData as any).experience === 'number' ? (userData as any).experience : 0;
+
   // Format time to MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -48,16 +52,16 @@ export function MiningDashboard() {
               </div>
               <div className="flex items-center">
                 <Coins className="h-5 w-5 text-yellow-400 mr-2" />
-                <span className="text-sm">{userData.coins.toLocaleString()} $COINS</span>
+                <span className="text-sm">{safeCoins.toLocaleString()} $COINS</span>
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Experience</span>
-                <span>{userData.experience.toLocaleString()}</span>
+                <span>{safeExperience.toLocaleString()}</span>
               </div>
-              <Progress value={userData.experience} className="h-2" />
+              <Progress value={safeExperience} className="h-2" />
             </div>
 
             {miningState.miningActive ? (

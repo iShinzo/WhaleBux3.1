@@ -12,13 +12,14 @@ import { UpgradesPanel } from "@/components/upgrades-panel"
 import { WalletPanel } from "@/components/wallet-panel"
 import { StatsPanel } from "@/components/stats-panel"
 import { useUserData } from "@/hooks/use-user-data"
-import { TasksPanel } from "@/components/tasks-panel"
+import TasksPanel from "@/components/tasks-panel"
 import { DailyLogin } from "@/components/daily-login"
 import { ReferralSystem } from "@/components/referral-system"
 import { ReferralMarket } from "@/components/referral-market"
-import { Leaderboard } from "@/components/leaderboard"
+import Leaderboard from "@/components/leaderboard"
 import AuthPage from "./auth/page"
 import { UserProfile } from "@/components/user-profile"
+import VipMembership from "@/components/vip-membership"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -97,7 +98,7 @@ export default function Home() {
         </header>
 
         <Tabs defaultValue="mining" className="w-full">
-          <TabsList className="grid grid-cols-8 mb-6">
+          <TabsList className="grid grid-cols-9 mb-6">
             <TabsTrigger value="mining" className="flex items-center">
               <Zap className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Mining</span>
@@ -129,6 +130,10 @@ export default function Home() {
             <TabsTrigger value="wallet" className="flex items-center">
               <Wallet className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Wallet</span>
+            </TabsTrigger>
+            <TabsTrigger value="vip" className="flex items-center">
+              <Trophy className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">VIP</span>
             </TabsTrigger>
           </TabsList>
 
@@ -166,6 +171,10 @@ export default function Home() {
 
           <TabsContent value="leaderboard">
             <Leaderboard />
+          </TabsContent>
+
+          <TabsContent value="vip">
+            <VipMembership />
           </TabsContent>
         </Tabs>
       </div>

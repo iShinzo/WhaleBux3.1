@@ -1,80 +1,115 @@
-"use client"
+// hooks/use-user-data.ts
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { LEVEL_CONFIG } from "@/lib/config"
-
-interface UserData {
-  coins: number
-  tokens: number
-  experience: number
-  level: number
-  rateUpgradeLevel: number
-  boostUpgradeLevel: number
-  timeUpgradeLevel: number
+// Define the type for user data
+export interface UserData {
+  username: string;
+  level: number;
+  coins: number;
+  tokens: number;
+  rateUpgradeLevel: number;
+  boostUpgradeLevel: number;
+  timeUpgradeLevel: number;
+  vipLevel: number;
+  vipExpiryDate: string | null;
+  // Add other fields as needed
 }
 
-interface UserDataContextType {
-  userData: UserData
-  updateUserData: (updates: Partial<UserData>) => void
-}
-
-const UserDataContext = createContext<UserDataContextType | undefined>(undefined)
-
-export function UserDataProvider({ children }: { children: ReactNode }) {
-  const [userData, setUserData] = useState<UserData>({
-    coins: 100,
-    tokens: 0.5,
-    experience: 50,
-    level: 1,
-    rateUpgradeLevel: 0,
-    boostUpgradeLevel: 0,
-    timeUpgradeLevel: 0,
-  })
-
-  // Load user data from localStorage on initial render
-  useEffect(() => {
-    const savedData = localStorage.getItem("whalebux-user-data")
-    if (savedData) {
-      try {
-        setUserData(JSON.parse(savedData))
-      } catch (error) {
-        console.error("Failed to parse saved user data:", error)
-      }
-    }
-  }, [])
-
-  // Save user data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("whalebux-user-data", JSON.stringify(userData))
-  }, [userData])
-
-  // Calculate user level based on experience
-  useEffect(() => {
-    let newLevel = 1
-
-    for (let level = 9; level >= 1; level--) {
-      if (userData.experience >= LEVEL_CONFIG[level].xpMin) {
-        newLevel = level
-        break
-      }
-    }
-
-    if (newLevel !== userData.level) {
-      setUserData((prev) => ({ ...prev, level: newLevel }))
-    }
-  }, [userData.experience, userData.level])
-
-  const updateUserData = (updates: Partial<UserData>) => {
-    setUserData((prev) => ({ ...prev, ...updates }))
-  }
-
-  return <UserDataContext.Provider value={{ userData, updateUserData }}>{children}</UserDataContext.Provider>
+// Define the type for updates to avoid implicit 'any' error
+interface UserDataUpdates {
+  username?: string;
+  level?: number;
+  coins?: number;
+  tokens?: number;
+  rateUpgradeLevel?: number;
+  boostUpgradeLevel?: number;
+  timeUpgradeLevel?: number;
+  vipLevel?: number;
+  vipExpiryDate?: string | null;
+  // Add other fields as needed
 }
 
 export function useUserData() {
-  const context = useContext(UserDataContext)
-  if (context === undefined) {
-    throw new Error("useUserData must be used within a UserDataProvider")
+  const [userData, setUserData] = useState<UserData>({
+    username: '',
+    level: 1,
+    coins: 0,
+    tokens: 0,
+    rateUpgradeLevel: 0,
+    boostUpgradeLevel: 0,
+    timeUpgradeLevel: 0,
+    vipLevel: 0,
+    vipExpiryDate: null,
+    // Add other fields as needed
+  })
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch user data from Supabase
+  useEffect(() => {
+    async function fetchUserData() {
+      const { data: session } = await supabase.auth.getSession()
+      if (session?.session?.user) {
+        const userId = session.session.user.id
+        // Get user profile data from your profiles table
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single()
+        if (data && !error) {
+          setUserData({
+            username: data.username || 'User',
+            level: data.level || 1,
+            coins: data.coins || 0,
+            tokens: data.tokens || 0,
+            rateUpgradeLevel: data.rate_upgrade_level || 0,
+            boostUpgradeLevel: data.boost_upgrade_level || 0,
+            timeUpgradeLevel: data.time_upgrade_level || 0,
+            vipLevel: data.vip_level || 0,
+            vipExpiryDate: data.vip_expiry_date || null,
+            // Map other fields
+          })
+        }
+      }
+      setIsLoading(false)
+    }
+    fetchUserData()
+  }, [])
+
+  // Update user data in Supabase
+  const updateUserData = async (updates: UserDataUpdates) => {
+    const { data: session } = await supabase.auth.getSession()
+    if (!session?.session?.user) return
+    const userId = session.session.user.id
+    setUserData(prev => ({ ...prev, ...updates }))
+    // Convert to snake_case for database
+    const dbUpdates = {
+      username: updates.username,
+      level: updates.level,
+      coins: updates.coins,
+      tokens: updates.tokens,
+      rate_upgrade_level: updates.rateUpgradeLevel,
+      boost_upgrade_level: updates.boostUpgradeLevel,
+      time_upgrade_level: updates.timeUpgradeLevel,
+      vip_level: updates.vipLevel,
+      vip_expiry_date: updates.vipExpiryDate,
+      // Map other fields
+    }
+    // Only include fields that were actually updated
+    const filteredUpdates = Object.entries(dbUpdates)
+      .filter(([key, value]) => value !== undefined)
+      .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {})
+    // Update in Supabase
+    const { data: updateResult, error } = await supabase
+      .from('profiles')
+      .update(filteredUpdates)
+      .eq('user_id', userId)
+      .select()
+    if (error || !updateResult || updateResult.length === 0) {
+      console.error('Error updating user data:', error, updateResult)
+    }
   }
-  return context
+
+  return { userData, updateUserData, isLoading }
 }

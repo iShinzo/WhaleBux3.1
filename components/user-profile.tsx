@@ -22,6 +22,16 @@ import { useMiningState } from "@/hooks/use-mining-state"
 
 export function UserProfile() {
   const { userData } = useUserData()
+  // Ensure fallback for new fields if missing from DB
+  // Patch: Provide fallback for missing fields, but only for those that exist in the UI
+  const safeUserData = {
+    ...userData,
+    // Only fallback for fields that exist in UserData or UI
+    avatar: (userData as any).avatar || '',
+    friendSlots: (userData as any).friendSlots ?? (userData.vipLevel === 1 ? 1 : userData.vipLevel === 2 ? 3 : userData.vipLevel === 3 ? 5 : 0),
+    activeTasks: (userData as any).activeTasks ?? 0,
+    maxTasks: (userData as any).maxTasks ?? (userData.vipLevel === 1 ? 2 : userData.vipLevel === 2 ? 3 : userData.vipLevel === 3 ? 5 : 1),
+  }
   const { actualRate, actualBoost, actualDuration } = useMiningState()
   const [activeTab, setActiveTab] = useState("boosts")
 
@@ -76,8 +86,8 @@ export function UserProfile() {
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={userData.avatar || ""} alt={userData.username} />
-            <AvatarFallback>{getInitials(userData.username)}</AvatarFallback>
+            <AvatarImage src={safeUserData.avatar || ""} alt={safeUserData.username} />
+            <AvatarFallback>{getInitials(safeUserData.username)}</AvatarFallback>
           </Avatar>
         </Button>
       </DialogTrigger>
@@ -91,16 +101,15 @@ export function UserProfile() {
           <div className="md:w-1/3">
             <div className="flex flex-col items-center text-center mb-4">
               <Avatar className="h-20 w-20 mb-2">
-                <AvatarImage src={userData.avatar || ""} alt={userData.username} />
-                <AvatarFallback className="text-xl">{getInitials(userData.username)}</AvatarFallback>
+                <AvatarImage src={safeUserData.avatar || ""} alt={safeUserData.username} />
+                <AvatarFallback className="text-xl">{getInitials(safeUserData.username)}</AvatarFallback>
               </Avatar>
-              <h3 className="text-lg font-medium">{userData.username}</h3>
-              <p className="text-sm text-muted-foreground">Level {userData.level} Miner</p>
-
-              {userData.vipLevel > 0 && (
-                <Badge className={`mt-2 ${getVipBadgeColor(userData.vipLevel)}`}>
+              <h3 className="text-lg font-medium">{safeUserData.username}</h3>
+              <p className="text-sm text-muted-foreground">Level {safeUserData.level} Miner</p>
+              {safeUserData.vipLevel > 0 && (
+                <Badge className={`mt-2 ${getVipBadgeColor(safeUserData.vipLevel)}`}>
                   <Crown className="h-3 w-3 mr-1" />
-                  VIP {userData.vipLevel} - {getVipName(userData.vipLevel)}
+                  VIP {safeUserData.vipLevel} - {getVipName(safeUserData.vipLevel)}
                 </Badge>
               )}
             </div>
@@ -110,7 +119,7 @@ export function UserProfile() {
                 <div className="text-xs text-muted-foreground">$COINS Balance</div>
                 <div className="flex items-center">
                   <Coins className="h-4 w-4 text-yellow-400 mr-1" />
-                  <span className="font-medium">{userData.coins.toLocaleString()}</span>
+                  <span className="font-medium">{safeUserData.coins?.toLocaleString?.() ?? 0}</span>
                 </div>
               </div>
 
@@ -126,7 +135,7 @@ export function UserProfile() {
                       className="object-contain"
                     />
                   </div>
-                  <span className="font-medium">{userData.tokens.toFixed(4)}</span>
+                  <span className="font-medium">{safeUserData.tokens?.toFixed?.(4) ?? 0}</span>
                 </div>
               </div>
 
@@ -134,7 +143,7 @@ export function UserProfile() {
                 <div className="text-xs text-muted-foreground">Friend Slots</div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 text-blue-400 mr-1" />
-                  <span className="font-medium">{userData.friendSlots}</span>
+                  <span className="font-medium">{safeUserData.friendSlots}</span>
                 </div>
               </div>
 
@@ -143,17 +152,17 @@ export function UserProfile() {
                 <div className="flex items-center">
                   <CheckCircle className="h-4 w-4 text-green-400 mr-1" />
                   <span className="font-medium">
-                    {userData.activeTasks} / {userData.maxTasks}
+                    {safeUserData.activeTasks} / {safeUserData.maxTasks}
                   </span>
                 </div>
               </div>
 
-              {userData.vipLevel > 0 && userData.vipExpiryDate && (
+              {safeUserData.vipLevel > 0 && safeUserData.vipExpiryDate && (
                 <div className="bg-card p-3 rounded-lg">
                   <div className="text-xs text-muted-foreground">VIP Expires</div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 text-yellow-400 mr-1" />
-                    <span className="font-medium">{formatExpiryDate(userData.vipExpiryDate)}</span>
+                    <span className="font-medium">{formatExpiryDate(safeUserData.vipExpiryDate)}</span>
                   </div>
                 </div>
               )}
@@ -200,8 +209,8 @@ export function UserProfile() {
                             <span className="font-medium">{actualRate.toFixed(2)}/hr</span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {userData.vipLevel > 0 && (
-                              <span className="text-green-400">+{userData.vipLevel} from VIP</span>
+                            {safeUserData.vipLevel > 0 && (
+                              <span className="text-green-400">+{safeUserData.vipLevel} from VIP</span>
                             )}
                           </div>
                         </div>
@@ -213,9 +222,9 @@ export function UserProfile() {
                             <span className="font-medium">+{actualBoost}%</span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {userData.vipLevel > 0 && (
+                            {safeUserData.vipLevel > 0 && (
                               <span className="text-green-400">
-                                +{userData.vipLevel === 1 ? 5 : userData.vipLevel === 2 ? 10 : 15}% from VIP
+                                +{safeUserData.vipLevel === 1 ? 5 : safeUserData.vipLevel === 2 ? 10 : 15}% from VIP
                               </span>
                             )}
                           </div>
@@ -228,7 +237,7 @@ export function UserProfile() {
                             <span className="font-medium">{(actualDuration / 60).toFixed(1)} min</span>
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {userData.vipLevel >= 3 && <span className="text-green-400">-1 hour from VIP</span>}
+                            {safeUserData.vipLevel >= 3 && <span className="text-green-400">-1 hour from VIP</span>}
                           </div>
                         </div>
                       </div>
@@ -237,35 +246,31 @@ export function UserProfile() {
 
                       <div>
                         <h4 className="text-sm font-medium mb-2">VIP Benefits</h4>
-                        {userData.vipLevel > 0 ? (
+                        {safeUserData.vipLevel > 0 ? (
                           <ul className="space-y-2">
                             <li className="flex items-center">
                               <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
-                              <span className="text-sm">+{userData.vipLevel} Mining Rate</span>
+                              <span className="text-sm">+{safeUserData.vipLevel} Mining Rate</span>
                             </li>
-
                             <li className="flex items-center">
                               <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                               <span className="text-sm">
-                                +{userData.vipLevel === 1 ? 5 : userData.vipLevel === 2 ? 10 : 15}% Mining Boost
+                                +{safeUserData.vipLevel === 1 ? 5 : safeUserData.vipLevel === 2 ? 10 : 15}% Mining Boost
                               </span>
                             </li>
-
                             <li className="flex items-center">
                               <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                               <span className="text-sm">
-                                +{userData.vipLevel === 1 ? 1 : userData.vipLevel === 2 ? 3 : 5} Friend Slots
+                                +{safeUserData.vipLevel === 1 ? 1 : safeUserData.vipLevel === 2 ? 3 : 5} Friend Slots
                               </span>
                             </li>
-
-                            {userData.vipLevel >= 2 && (
+                            {safeUserData.vipLevel >= 2 && (
                               <li className="flex items-center">
                                 <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                                 <span className="text-sm">Auto-Claim Mining Rewards</span>
                               </li>
                             )}
-
-                            {userData.vipLevel >= 3 && (
+                            {safeUserData.vipLevel >= 3 && (
                               <li className="flex items-center">
                                 <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
                                 <span className="text-sm">-1 Hour Mining Time</span>
