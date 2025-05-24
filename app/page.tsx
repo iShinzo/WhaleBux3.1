@@ -18,6 +18,7 @@ import { ReferralSystem } from "@/components/referral-system"
 import { ReferralMarket } from "@/components/referral-market"
 import { Leaderboard } from "@/components/leaderboard"
 import AuthPage from "./auth/page"
+import { UserProfile } from "@/components/user-profile"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -90,6 +91,8 @@ export default function Home() {
               <span className="font-bold">{userData.tokens.toFixed(4)}</span>
               <span className="text-xs ml-1 text-muted-foreground">$WBUX</span>
             </div>
+            {/* User Profile Button */}
+            <UserProfile />
           </div>
         </header>
 
